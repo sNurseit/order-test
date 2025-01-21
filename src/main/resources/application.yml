@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: order-project
+  flyway:
+    baseline-on-migrate: true
+    placeholderReplacement: false
+    out-of-order: true
+  datasource:
+    url: jdbc:postgresql://postgres:5432/order_db
+    username: postgres
+    password: postgres
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+server:
+  port: 8080
