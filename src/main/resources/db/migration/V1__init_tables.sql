@@ -1,6 +1,7 @@
 
 CREATE TABLE users (
-                       username TEXT PRIMARY KEY,
+                       id BIGSERIAL PRIMARY KEY,
+                       username TEXT UNIQUE,
                        password TEXT NOT NULL,
                        enable BOOLEAN NOT NULL
 );
@@ -21,5 +22,4 @@ CREATE TABLE user_roles (
 
 INSERT INTO roles (name) VALUES
                              ('ROLE_USER'),
-                             ('ROLE_ADMIN'),
-                             ('ROLE_MANAGER');
+                             ('ROLE_ADMIN');
