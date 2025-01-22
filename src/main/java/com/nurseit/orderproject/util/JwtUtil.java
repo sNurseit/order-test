@@ -1,6 +1,8 @@
 package com.nurseit.orderproject.util;
 
 import com.nurseit.orderproject.dto.LoginRequestDto;
+import com.nurseit.orderproject.entity.Role;
+import com.nurseit.orderproject.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -10,11 +12,9 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -27,10 +27,7 @@ public class JwtUtil {
 
     public Claims validateToken(final String token) {
         try {
-            return Jwts.parser()
-                    .setSigningKey(getSignKey())
-                    .parseClaimsJws(token)
-                    .getBody();
+            return getClaimsFromToken(token);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JWT token", e);
         }
@@ -49,10 +46,11 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(LoginRequestDto user) {
+    public String generateToken(String username, Set<Role> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("user", user);
-        return createToken(claims, user.getUsername());
+        claims.put("user", username);
+        claims.put("roles", roles);
+        return createToken(claims, username);
     }
 
     private String createToken(Map<String, Object> claims, String userName) {
@@ -67,6 +65,38 @@ public class JwtUtil {
 
     private byte[] getSignKey() {
         return Base64.getDecoder().decode(secretKey); // Используем стандартный Base64 декодер
+    }
+
+    public String getUsernameFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    public List<String> getRolesFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        List<String> roles = ((List<?>) claims.get("roles")).stream()
+                .map(role -> (String) ((java.util.Map<?, ?>) role).get("name"))
+                .collect(Collectors.toList());
+        return roles;
+    }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(getSignKey())
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     private Claims extractAllClaims(String token) {
