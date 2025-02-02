@@ -24,39 +24,17 @@ public class JwtUtil {
     @Value("${jwt.secret-key}")
     private String secretKey;
 
-
-    public Claims validateToken(final String token) {
-        try {
-            return getClaimsFromToken(token);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JWT token", e);
-        }
-    }
-
-    public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    public String generateToken(String username, Set<Role> roles) {
+    public String generateToken(Long userId, Set<Role> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("user", username);
+        claims.put("user", userId);
         claims.put("roles", roles);
-        return createToken(claims, username);
+        return createToken(claims, userId);
     }
 
-    private String createToken(Map<String, Object> claims, String userName) {
+    private String createToken(Map<String, Object> claims, Long userId) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userName)
+                .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // 1 час
                 .signWith(SignatureAlgorithm.HS256, getSignKey()) // Используем строку для ключа
@@ -67,7 +45,7 @@ public class JwtUtil {
         return Base64.getDecoder().decode(secretKey); // Используем стандартный Base64 декодер
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getUserIdFromToken(String token) {
         return Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
@@ -89,28 +67,5 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
-
-    public boolean isTokenValid(String token) {
-        try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            return true;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
-
-    private Claims extractAllClaims(String token) {
-        return null;
-        /*
-        Jwts
-                .parser()
-                .verifyWith(getSignKey())
-                .parseSignedClaims(token)
-                .getPayload()
-                .build();
-
-         */
-    }
-
 
 }

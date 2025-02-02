@@ -3,8 +3,10 @@ package com.nurseit.orderproject.service;
 import com.nurseit.orderproject.dto.ProductDto;
 import com.nurseit.orderproject.entity.Product;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ProductService {
 
@@ -23,6 +25,7 @@ public interface ProductService {
      */
     Optional<Product> findById(Long id);
 
+    Set<Product> findAllByIdsWithValidQuantity(Set<Long> ids);
     /**
      * Создать новый продукт.
      *
@@ -46,5 +49,8 @@ public interface ProductService {
      * @param id идентификатор удаляемого продукта.
      */
     void deleteById(Long id);
+
+
+    void saveAll(Set<Product> products);
 }
 

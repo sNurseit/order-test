@@ -60,6 +60,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Invalid username or password");
         }
 
-        return new LoginResponseDto(jwtUtil.generateToken(user.getUsername(), user.getRoles()));
+        return new LoginResponseDto(jwtUtil.generateToken(user.getId(), user.getRoles()));
     }
 }

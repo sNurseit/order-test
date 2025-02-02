@@ -3,30 +3,41 @@ package com.nurseit.orderproject.service.impl;
 import com.nurseit.orderproject.dto.ProductDto;
 import com.nurseit.orderproject.entity.Product;
 import com.nurseit.orderproject.enumuration.ProductStatus;
+import com.nurseit.orderproject.repository.OrderProductRepository;
 import com.nurseit.orderproject.repository.ProductRepository;
 import com.nurseit.orderproject.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private final ProductRepository productRepository;
+    private final ProductRepository repository;
 
     public List<Product> findAll() {
-        return productRepository.findAll();
+        return repository.findAll();
     }
 
     public Optional<Product> findById(Long id) {
-        return productRepository.findById(id);
+        return repository.findById(id);
     }
 
+    @Override
+    public Set<Product> findAllByIdsWithValidQuantity(Set<Long> ids) {
+        Set<Product> products = repository.findAllByIdIn(ids);
+        if (!products.stream().map(Product::getId).collect(Collectors.toSet()).containsAll(ids)) {
+            throw new RuntimeException("Some products not found in the database for the provided IDs");
+        }
+        return products;
+    }
+
+
     public Product create(ProductDto productDto) {
-        return productRepository.save(
+        return repository.save(
                 Product.builder()
                         .name(productDto.getName())
                         .price(productDto.getPrice())
@@ -35,16 +46,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     public Product update(Long id, ProductDto updatedProduct) {
-        return productRepository.findById(id).map(product -> {
+        return repository.findById(id).map(product -> {
             product.setName(updatedProduct.getName());
             product.setPrice(updatedProduct.getPrice());
             product.setQuantity(updatedProduct.getQuantity());
-            return productRepository.save(product);
+            return repository.save(product);
         }).orElseThrow(() -> new RuntimeException("Product not found"));
     }
 
     public void deleteById(Long id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
+        Product product = repository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
         product.setStatus(ProductStatus.DELETED);
+    }
+
+    @Override
+    public void saveAll(Set<Product> products) {
+        repository.saveAll(products);
     }
 }
